@@ -1,36 +1,36 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Offline tracker and guide for all 55 GTA 6 PlayStation 5 trophies: checklist, five-stage Platinum roadmap, cited guides, spoiler-free mode.">
-<title>GTA 6 Trophy Guide — All 55 PS5 Trophies, Tracker &amp; Platinum Roadmap</title>
+<title>GTA VI Trophy Guide — All 55 PS5 Trophies, Roadmap &amp; Tracker</title>
+<meta name="description" content="Interactive offline guide and tracker for all 55 Grand Theft Auto VI trophies on PlayStation 5: checklist, five-stage platinum roadmap, cited guides and a spoiler-free mode. Zero network requests, system fonts only.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="page">
   <header class="masthead">
     <div class="title-block">
-      <h1>GTA 6 Trophy Guide</h1>
-      <p class="subtitle">All 55 PlayStation 5 trophies for Grand Theft Auto VI — fully offline. Platinum: about 200 hours, difficulty 4/10 (PowerPyx guide estimate).</p>
+      <h1>GTA VI Trophy Guide</h1>
+      <p class="subtitle">All 55 PlayStation 5 trophies, fully offline — Platinum in about 200 hours at difficulty 4/10 (PowerPyx guide estimate).</p>
     </div>
-    <div class="progress-block" aria-label="Platinum progress">
-      <div class="progress-line" id="progressLine">0 of 55 earned</div>
-      <div class="grade-counts" id="gradeCounts"></div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-      <div class="platinum-line" id="platinumLine">Platinum: Vice Got a Price! — earn the other 54 trophies.</div>
+    <div class="progress-block" aria-label="Progress">
+      <div class="progress-line"><strong id="progress-line">0 of 55 earned</strong></div>
+      <div class="grade-counts" id="grade-counts">Platinum 0/1 · Gold 0/2 · Silver 0/6 · Bronze 0/46</div>
+      <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="55" aria-valuenow="0" id="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="platinum-line" id="platinum-line">Platinum: Vice Got a Price! — earn the other 54 trophies.</div>
     </div>
   </header>
 
-  <div class="toolbar" role="toolbar" aria-label="Trophy filters and tools">
-    <select id="gradeFilter" aria-label="Filter by grade">
+  <div class="toolbar" role="toolbar" aria-label="Filters and views">
+    <select id="grade-filter" aria-label="Filter by grade">
       <option value="">All grades</option>
       <option value="platinum">Platinum</option>
       <option value="gold">Gold</option>
       <option value="silver">Silver</option>
       <option value="bronze">Bronze</option>
     </select>
-    <select id="kindFilter" aria-label="Filter by kind">
+    <select id="kind-filter" aria-label="Filter by kind">
       <option value="">All kinds</option>
       <option value="story">Story</option>
       <option value="missable">Missable</option>
@@ -39,45 +39,50 @@
       <option value="online">Online</option>
       <option value="miscellaneous">Other</option>
     </select>
-    <input id="searchBox" type="search" placeholder="Search trophies…" aria-label="Search trophies">
-    <label class="check"><input type="checkbox" id="hideEarned"> Hide earned</label>
-    <label class="check"><input type="checkbox" id="missableOnly"> Missable only</label>
+    <input id="search" type="search" placeholder="Search trophies…" aria-label="Search trophies">
+    <label class="check"><input type="checkbox" id="hide-earned"> Hide earned</label>
+    <label class="check"><input type="checkbox" id="missable-only"> Missable only</label>
     <div class="tabs" role="tablist" aria-label="Views">
-      <button type="button" class="tab active" role="tab" aria-selected="true" data-view="checklist">Checklist</button>
-      <button type="button" class="tab" role="tab" aria-selected="false" data-view="roadmap">Roadmap</button>
-      <button type="button" class="tab" role="tab" aria-selected="false" data-view="index">Guide Index</button>
+      <button class="view-tab active" data-view="checklist" role="tab" aria-selected="true">Checklist</button>
+      <button class="view-tab" data-view="roadmap" role="tab" aria-selected="false">Roadmap</button>
+      <button class="view-tab" data-view="index" role="tab" aria-selected="false">Guide Index</button>
     </div>
-    <label class="check"><input type="checkbox" id="spoilerFree"> Spoiler-free</label>
+    <label class="check"><input type="checkbox" id="spoiler-free"> Spoiler-free</label>
     <span class="spacer"></span>
-    <button type="button" id="exportBtn">Export</button>
-    <label class="import-btn" for="importFile">Import</label>
-    <input type="file" id="importFile" accept="application/json,.json" hidden>
-    <span class="io-status" id="ioStatus" aria-live="polite"></span>
+    <button id="export-btn" type="button">Export</button>
+    <label class="import-btn" for="import-file">Import</label>
+    <input id="import-file" type="file" accept=".json,application/json" hidden>
+    <span class="io-status" id="io-status" aria-live="polite"></span>
   </div>
 
   <main>
-    <section id="view-checklist" class="view">
-      <p class="count-line" id="countLine"></p>
-      <div class="checklist-wrap">
-        <div class="list" id="list" role="list"></div>
-        <aside class="detail" id="detail" aria-live="polite"></aside>
+    <section id="view-checklist" class="view active" aria-label="Checklist">
+      <p class="count-line" id="count-line">Showing 55 of 55 trophies · 0 online — every trophy is single-player.</p>
+      <div class="checklist-grid">
+        <div>
+          <ul class="trophy-list" id="trophy-list"></ul>
+          <p class="empty-state" id="empty-state" hidden>No trophies match these filters.</p>
+        </div>
+        <aside class="detail-panel" id="detail-panel" aria-live="polite">
+          <p class="detail-hint">Select a trophy to see its guide.</p>
+        </aside>
       </div>
     </section>
 
-    <section id="view-roadmap" class="view" hidden>
-      <p class="intro">Five stages from the opening mission to the Platinum — every trophy in chapter order.</p>
-      <div class="stage-grid" id="stageGrid"></div>
+    <section id="view-roadmap" class="view" aria-label="Platinum roadmap" hidden>
+      <p class="roadmap-intro">Five stages from the opening mission to the Platinum — story first, side strands second, collectibles alongside, cleanup last.</p>
+      <div class="roadmap-grid" id="roadmap-stages"></div>
     </section>
 
-    <section id="view-index" class="view" hidden>
-      <p class="intro">Every guide on one page — all 55 trophies with their sources. Click a row to open its guide in the checklist.</p>
-      <div class="index-list" id="indexList"></div>
+    <section id="view-index" class="view" aria-label="Guide index" hidden>
+      <p class="index-intro">Every guide on one page — all 55 trophies, in checklist order, with their sources.</p>
+      <div class="index-list" id="index-list"></div>
     </section>
   </main>
 
   <footer>
-    <p>Guides are written in the builder&rsquo;s own words; each trophy cites its sources beside the guide (PowerPyx, GTABase, OutputLag). Five trophies have no confirmed unlock method published yet and their guides say so honestly. The story has five chapters; the final mission&rsquo;s chapter is unresolved between the guides, so none is claimed; chapter trophies pop at the start of the next chapter. No Rockstar logo or artwork is used.</p>
-    <p>Progress is saved in this browser only; nothing is fetched from the network. Spoiler-free mode hides the name, description and guide of unearned story trophies until they are earned; grades stay visible; PlayStation-hidden trophies always carry a hidden badge. Sources accessed 19 November 2026.</p>
+    <p>Guides are written in the builder&rsquo;s own words; each trophy cites its sources beside the guide (PowerPyx, GTABase, OutputLag). Five trophies have no confirmed unlock method published yet and their guides say so. The story has five chapters; the final mission&rsquo;s chapter is unresolved between the guides, so none is claimed; chapter trophies pop at the start of the next chapter. No Rockstar logo or artwork is used.</p>
+    <p>Progress is saved in your browser only, and nothing is fetched from the network. Spoiler-free mode hides the name, description and guide of unearned story trophies until they are earned; grades stay visible; PlayStation-hidden trophies always carry a hidden badge. Sources were opened on 19 November 2026.</p>
   </footer>
 </div>
 <script type="module" src="app.js"></script>

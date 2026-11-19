@@ -1,39 +1,46 @@
-// Pure filter helpers for the trophy list: read the controls, then
-// apply them to a trophy array against the earned set. No DOM writes
-// here — app.js owns rendering, so these two functions stay trivially
-// testable on their own.
+// Pure filter helpers for the trophy list. No DOM here: the main script
+// reads the controls and hands the values in, so these two functions
+// can be tested on their own without a browser.
 
-export function readFilters(doc = document) {
-  const byId = (id) => doc.getElementById(id);
+// Read the current filter control values out of a controls object.
+// The search text is lower-cased and trimmed once, here, so every
+// comparison downstream is a plain substring check.
+export function readFilters(controls) {
   return {
-    grade: byId('gradeFilter').value,
-    kind: byId('kindFilter').value,
-    search: byId('searchBox').value.toLowerCase().trim(),
-    hideEarned: byId('hideEarned').checked,
-    missableOnly: byId('missableOnly').checked,
+    grade: controls.grade || '',
+    kind: controls.kind || '',
+    search: (controls.search || '').toLowerCase().trim(),
+    hideEarned: Boolean(controls.hideEarned),
+    missableOnly: Boolean(controls.missableOnly),
   };
 }
 
-export function trophySearchText(t) {
-  return `${t.name} ${t.description} ${t.guide}`.toLowerCase();
+// Does one trophy match one kind filter value? The "missable" kind is
+// the missable flag, not a stored kind; the "online" kind matches
+// nothing, because no trophy in the data is online; every other kind
+// is an exact match against the trophy's stored kind.
+export function kindMatches(trophy, kind) {
+  if (!kind) return true;
+  if (kind === 'missable') return trophy.missable === true;
+  if (kind === 'online') return trophy.kind === 'online';
+  return trophy.kind === kind;
 }
 
+// Apply a filter set to a trophy list against the earned set. All five
+// conditions compose: a trophy shows only when every one of them holds.
+// Text search runs across name, description and guide together, so a
+// search for "meditation" finds both the meditation trophy itself and
+// the 100% trophy whose guide counts meditation spots.
 export function applyFilters(trophies, filters, earned) {
-  return trophies.filter((t) => {
-    if (filters.grade && t.grade !== filters.grade) return false;
-    if (filters.kind) {
-      if (filters.kind === 'missable') {
-        if (!t.missable) return false;
-      } else if (filters.kind === 'online') {
-        // No trophy is online, so this kind matches nothing by design.
-        if (t.kind !== 'online') return false;
-      } else if (t.kind !== filters.kind) {
-        return false;
-      }
+  return trophies.filter((trophy) => {
+    if (filters.grade && trophy.grade !== filters.grade) return false;
+    if (!kindMatches(trophy, filters.kind)) return false;
+    if (filters.hideEarned && earned.has(trophy.id)) return false;
+    if (filters.missableOnly && trophy.missable !== true) return false;
+    if (filters.search) {
+      const haystack = `${trophy.name} ${trophy.description} ${trophy.guide}`.toLowerCase();
+      if (!haystack.includes(filters.search)) return false;
     }
-    if (filters.hideEarned && earned.has(t.id)) return false;
-    if (filters.missableOnly && !t.missable) return false;
-    if (filters.search && !trophySearchText(t).includes(filters.search)) return false;
     return true;
   });
 }
