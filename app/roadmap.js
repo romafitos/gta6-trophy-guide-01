@@ -1,80 +1,89 @@
-// The five-stage platinum roadmap for the GTA VI trophy guide.
-// Stages hold their titles and blurbs; renderRoadmap builds one card per
-// stage into a container, with clickable trophy chips. The caller supplies
-// the trophy list, the earned set, and a callback for chip clicks.
+// The five-stage platinum roadmap: stage order, titles and short
+// blurbs, plus a renderer that builds one card per stage. Each card
+// shows its earned count and its trophies as clickable chips; clicking
+// a chip hands back to the checklist and opens that trophy's guide.
+// Stage contents: 1 story in chapter order (12), 2 stranger and
+// side-character strands (7), 3 collectibles and activities (33),
+// 4 cleanup and 100% completion (2), 5 the Platinum itself (1).
 
 export const STAGES = [
   {
-    n: 1,
-    title: 'Stage 1 — The Story',
-    blurb: 'Play the story in chapter order. Chapter trophies pop at the start of the next chapter, after its first mission or missions.',
+    stage: 1,
+    title: 'Stage 1 — The story',
+    blurb: 'Play the story in chapter order. Chapter trophies pop at the start of the next chapter, after its first mission or two.',
     wide: false,
   },
   {
-    n: 2,
-    title: 'Stage 2 — Strangers & Side Strands',
-    blurb: 'Stranger and side-character strands. All of them stay open after the story ends.',
+    stage: 2,
+    title: 'Stage 2 — Strangers & side characters',
+    blurb: 'Seven stranger and side-character strands. All open after the story, so none of them can be missed.',
     wide: false,
   },
   {
-    n: 3,
-    title: 'Stage 3 — Collectibles & Activities',
-    blurb: 'Collectibles and activities alongside the story. Warning: the one possibly-missable trophy lives here — do the Chapter 1 balcony meditation early.',
+    stage: 3,
+    title: 'Stage 3 — Collectibles & activities',
+    blurb: 'Do these alongside the story. The one possibly-missable trophy lives here: do the Chapter 1 balcony meditation early, just in case.',
     wide: true,
   },
   {
-    n: 4,
+    stage: 4,
     title: 'Stage 4 — Cleanup & 100%',
-    blurb: 'Mop up the long grinds and finish the 100% completion checklist.',
+    blurb: 'Mop up the long grinds and the 100% checklist once the story is done.',
     wide: false,
   },
   {
-    n: 5,
+    stage: 5,
     title: 'Stage 5 — Platinum',
-    blurb: 'The Platinum itself. No online or downloadable-content trophies are needed.',
+    blurb: 'Earn the other 54. No online or downloadable-content trophies are needed.',
     wide: false,
   },
 ];
 
-export function renderRoadmap(container, trophies, earned, onPick) {
+const GRADE_LABEL = { platinum: 'P', gold: 'G', silver: 'S', bronze: 'B' };
+
+// How many trophies each stage holds: 12 / 7 / 33 / 2 / 1.
+export function stageCounts(trophies) {
+  return STAGES.map((stage) => trophies.filter((t) => t.stage === stage.stage).length);
+}
+
+export function renderRoadmap(container, trophies, earned, onChipClick) {
   container.innerHTML = '';
-  const doc = container.ownerDocument;
   for (const stage of STAGES) {
-    const card = doc.createElement('article');
-    card.className = 'stage' + (stage.wide ? ' wide' : '');
-    card.dataset.stage = String(stage.n);
-    const members = trophies.filter((t) => t.stage === stage.n);
+    const members = trophies.filter((t) => t.stage === stage.stage);
     const done = members.filter((t) => earned.has(t.id)).length;
-    const head = doc.createElement('h3');
-    head.textContent = stage.title + ' ';
-    const count = doc.createElement('span');
+
+    const card = document.createElement('div');
+    card.className = 'stage-card' + (stage.wide ? ' wide' : '');
+    card.dataset.stage = String(stage.stage);
+
+    const heading = document.createElement('h3');
+    heading.textContent = stage.title + ' ';
+    const count = document.createElement('span');
     count.className = 'count';
     count.textContent = `(${done}/${members.length})`;
-    head.appendChild(count);
-    const blurb = doc.createElement('p');
+    heading.appendChild(count);
+    card.appendChild(heading);
+
+    const blurb = document.createElement('p');
     blurb.textContent = stage.blurb;
-    const chips = doc.createElement('div');
+    card.appendChild(blurb);
+
+    const chips = document.createElement('div');
     chips.className = 'chips';
     for (const t of members) {
-      const chip = doc.createElement('button');
+      const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'chip' + (earned.has(t.id) ? ' earned' : '');
-      chip.dataset.id = String(t.id);
-      chip.title = `${t.name} — ${t.grade}${t.missable ? ' (possibly missable)' : ''}`;
-      const grade = doc.createElement('span');
+      chip.dataset.trophyId = String(t.id);
+      const grade = document.createElement('span');
       grade.className = 'g-' + t.grade;
-      grade.textContent = t.grade;
-      chip.append(t.name + ' ', grade);
-      if (t.missable) {
-        const flag = doc.createElement('span');
-        flag.className = 'flag';
-        flag.textContent = ' ⚠ missable';
-        chip.appendChild(flag);
-      }
-      chip.addEventListener('click', () => onPick(t.id));
+      grade.textContent = GRADE_LABEL[t.grade];
+      chip.appendChild(grade);
+      chip.appendChild(document.createTextNode(' ' + t.name + (t.missable ? ' ⚠' : '')));
+      chip.addEventListener('click', () => onChipClick(t.id));
       chips.appendChild(chip);
     }
-    card.append(head, blurb, chips);
+    card.appendChild(chips);
     container.appendChild(card);
   }
 }

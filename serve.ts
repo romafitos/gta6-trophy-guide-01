@@ -1,74 +1,62 @@
-// A tiny static server for the guide folder only (Node 22, standard library
-// only), for local development: `node serve.ts` serves app/ on
-// http://localhost:8080 (`--port <n>` for another port). It sends the MIME
-// types a browser needs, refuses any path that escapes the guide folder,
-// answers 404 for anything that is not a file, and sends no-store caching.
-// A development convenience, not a production server.
+// Tiny static file server for local development of the trophy guide.
+//
+// Serves only the app/ folder beside this file, on localhost, port
+// 8080 by default (pass another port as the first argument). It sends
+// correct media types for the files a browser needs, refuses any path
+// that would escape the guide folder, answers 404 for anything that
+// is not a file, and sends no-store caching so edits show up at once.
+// Development convenience only, not a production server.
+//
+//   node serve.ts [port]
 
-import { createReadStream, statSync } from 'node:fs';
+import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = resolve(fileURLToPath(new URL('./app', import.meta.url)));
-const args = process.argv.slice(2);
-const portIndex = args.indexOf('--port');
-const requested = portIndex === -1 ? 8080 : Number(args[portIndex + 1]);
-const port = Number.isInteger(requested) && requested > 0 && requested < 65536 ? requested : 8080;
+const here = fileURLToPath(new URL('.', import.meta.url));
+const appDir = resolve(join(here, 'app'));
+const port = Number(process.argv[2] ?? 8080);
 
-const MIME = {
+const mediaTypes: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
   '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2',
-  '.webmanifest': 'application/manifest+json',
+  '.txt': 'text/plain; charset=utf-8',
 };
 
-const server = createServer((request, response) => {
-  const url = new URL(request.url ?? '/', 'http://localhost');
-  let pathname;
-  try {
-    pathname = decodeURIComponent(url.pathname);
-  } catch {
-    response.writeHead(400).end('bad request');
+const server = createServer((req, res) => {
+  const rawPath = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
+  const relPath = rawPath === '/' ? 'index.html' : rawPath.replace(/^\/+/, '');
+  const target = resolve(join(appDir, normalize(relPath)));
+
+  // Refuse anything that escapes the guide folder.
+  if (target !== appDir && !target.startsWith(appDir + sep)) {
+    res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' });
+    res.end('forbidden\n');
     return;
   }
-  if (pathname.endsWith('/')) pathname += 'index.html';
-  const file = resolve(join(root, normalize(pathname)));
-  if (file !== root && !file.startsWith(root + sep)) {
-    response.writeHead(403).end('forbidden');
+  if (!existsSync(target) || !statSync(target).isFile()) {
+    res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+    res.end('not found\n');
     return;
   }
-  let size;
-  try {
-    const stats = statSync(file);
-    if (!stats.isFile()) throw new Error('not a file');
-    size = stats.size;
-  } catch {
-    response.writeHead(404).end('not found');
-    return;
-  }
-  response.writeHead(200, {
-    'content-type': MIME[extname(file).toLowerCase()] ?? 'application/octet-stream',
-    'content-length': size,
+
+  res.writeHead(200, {
+    'content-type': mediaTypes[extname(target).toLowerCase()] ?? 'application/octet-stream',
     'cache-control': 'no-store',
   });
-  createReadStream(file).pipe(response);
-});
-
-server.on('error', (err) => {
-  console.error(`serve failed: ${err.message}`);
-  process.exitCode = 1;
+  createReadStream(target).pipe(res);
 });
 
 server.listen(port, '127.0.0.1', () => {
-  console.log(`app/ is on http://localhost:${port}`);
+  console.log(`trophy guide serving app/ at http://localhost:${port}`);
 });
