@@ -1,0 +1,34 @@
+[
+  {
+    "file": "1-checklist.jpg",
+    "note": "Cover: checklist with progress bar, single-row filters, and the Cunning Stunts guide and sources open",
+    "viewport": {
+      "height": 800,
+      "width": 1280
+    }
+  },
+  {
+    "file": "2-roadmap.jpg",
+    "note": "Platinum roadmap with all five stages visible",
+    "viewport": {
+      "height": 800,
+      "width": 1280
+    }
+  },
+  {
+    "file": "3-filters-spoiler.jpg",
+    "note": "Kind filter on story with spoiler-free mode on and unearned story trophies masked",
+    "viewport": {
+      "height": 800,
+      "width": 1280
+    }
+  },
+  {
+    "file": "4-guide-index.jpg",
+    "note": "Guide index showing all 55 guides with sources on one page",
+    "viewport": {
+      "height": 800,
+      "width": 1280
+    }
+  }
+]
